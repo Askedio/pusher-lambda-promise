@@ -24,6 +24,6 @@ require('pusher-lambda-promise')({
 }).then((results) => {
     console.log(results);
 }).catch((error) => {
-    console.error(results);
+    console.error(error);
 });
 ```
