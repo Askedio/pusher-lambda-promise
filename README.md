@@ -14,6 +14,29 @@ npm install --save pusher-lambda-promise
 Require the module, pass settings and data.
 
 ```javascript
+const pusher = require('pusher-lambda-promise');
+
+// Settings
+pusher({
+    appId: process.env.PUSHER_APP_ID,
+    key: process.env.PUSHER_APP_KEY,
+    secret: process.env.PUSHER_APP_SECRET,
+    cluster: process.env.PUSHER_APP_CLUSTER
+});
+
+// Trigger 
+pusher('update', 'private-channel', {
+    status: 'status'
+}).then((results) => {
+    console.log(results);
+}).catch((error) => {
+    console.error(error);
+});
+```
+
+
+Inline:
+```javascript
 require('pusher-lambda-promise')({
     appId: process.env.PUSHER_APP_ID,
     key: process.env.PUSHER_APP_KEY,
