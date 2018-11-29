@@ -1,59 +1,61 @@
-'use strict';
-
-const request = require('request');
+const axios = require('axios');
 const md5 = require('md5');
 const sha256 = require('js-sha256');
+const qs = require('qs');
 
-module.exports = (settings) => {
-    const AUTH_VERSION = '1.0';
-    const TIMEOUT = settings.timeout || 5 * 1000;
-    const PATH = `/apps/${settings.appId}/events`;
+function Pusher(settings) {
+    this.AUTH_VERSION = '1.0';
+    this.TIMEOUT = settings.timeout || 5 * 1000;
+    this.appId = settings.appId;
+    this.key = settings.key;
+    this.secret = settings.secret;
+    this.cluster = settings.cluster;
+}
 
-    const toOrderedArray = (map) => {
-        return Object.keys(map).map(function (key) {
-            return [key, map[key]];
-        }).sort(function (a, b) {
-            return a[0] > b[0];
-        }).map(function (pair) {
-            return pair[0] + "=" + pair[1];
-        });
+const trigger = function(name, channel, data, socketId = null) {
+    const body = {
+        name,
+        channel,
+        data: JSON.stringify(data),
+        ...socketId && { socket_id: socketId },
     };
-
-    return (name, channel, data) => {
-        const timestamp = Math.round(Date.now() / 1000);
-
-        const body = {
-            name,
-            channel,
-            data: JSON.stringify(data),
-        };
-
-        const params = {
-            auth_key: settings.key,
-            auth_timestamp: timestamp,
-            auth_version: AUTH_VERSION,
-            body_md5: md5(JSON.stringify(body))
-        };
-
-        const queryString = toOrderedArray(params).join('&');
-
-        return new Promise((resolve, reject) => {
-            request({
-                uri: `http://api-${settings.cluster}.pusher.com/apps/${settings.appId}/events?${queryString}&auth_signature=${sha256.hmac(settings.secret, ['POST', PATH, queryString].join('\n'))}`,
-                method: 'POST',
-                body: body,
-                json: true,
-                timeout: TIMEOUT
-            }, (error, response, body) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                resolve({
-                    response,
-                    body
-                });
-            });
-        });
-    };
+    
+    return this.dispatch(body);
 };
+
+const triggerBatch = function(data) {
+
+    const mappedData = data.map((event) => {
+        event.data = JSON.stringify(event.data);
+        return event;
+    });
+
+    const batch = {
+        batch: mappedData,
+    };
+
+    return this.dispatch(batch, 'batch_events');
+};
+
+const dispatch = function(body, type = 'events') {
+    const timestamp = Math.round(Date.now() / 1000);
+
+    const params = {
+        auth_key: this.key,
+        auth_timestamp: timestamp,
+        auth_version: this.AUTH_VERSION,
+        body_md5: md5(JSON.stringify(body))
+    };
+
+    const path = `/apps/${this.appId}/${type}`;
+
+    const queryString = qs.stringify(params);
+
+    return axios.post(`http://api-${this.cluster}.pusher.com/${path}?${queryString}&auth_signature=${sha256.hmac(this.secret, ['POST', path, queryString].join('\n'))}`, body);
+};
+
+Pusher.prototype.trigger = trigger;
+Pusher.prototype.triggerBatch = triggerBatch;
+Pusher.prototype.dispatch = dispatch;
+
+module.exports = Pusher;
