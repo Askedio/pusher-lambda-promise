@@ -1,6 +1,6 @@
 {
   "name": "pusher-lambda-promise",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A basic Pusher.com trigger for AWS Lambda using promises.",
   "main": "index.js",
   "scripts": {
