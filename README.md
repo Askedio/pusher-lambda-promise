@@ -51,7 +51,7 @@ const batch = [
     }
 ];
 
-pusher.trigger(batch)
+pusher.triggerBatch(batch)
 .then((results) => {
     console.log(results);
 }).catch((error) => {
