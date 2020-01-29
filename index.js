@@ -51,7 +51,7 @@ const dispatch = function(body, type = 'events') {
 
     const queryString = qs.stringify(params);
 
-    return axios.post(`http://api-${this.cluster}.pusher.com/${path}?${queryString}&auth_signature=${sha256.hmac(this.secret, ['POST', path, queryString].join('\n'))}`, body);
+    return axios.post(`http://api-${this.cluster}.pusher.com${path}?${queryString}&auth_signature=${sha256.hmac(this.secret, ['POST', path, queryString].join('\n'))}`, body);
 };
 
 Pusher.prototype.trigger = trigger;
